@@ -4,13 +4,14 @@
   "description": "tinder for devs",
   "main": "index.js",
   "scripts": {
-    "start":"node src/app.js",
+    "start": "node src/app.js",
     "dev": "nodemon src/app.js"
   },
   "author": "Ekansh Aggarwal",
   "license": "ISC",
   "dependencies": {
     "express": "^4.21.2",
+    "mongoose": "^8.10.1",
     "nodemon": "^3.1.9"
   }
 }
