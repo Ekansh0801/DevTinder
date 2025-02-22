@@ -1,12 +1,15 @@
 const express = require("express");
 const User = require("./models/user.js")
 const app = express();
-
+const cookieParser = require("cookie-parser")
+const jwt = require("jsonwebtoken");
 app.use(express.json());
+app.use(cookieParser())
 
 const connectDB = require('../src/config/database.js');
 const { validateSignupData,validateLoginData } = require("./utils/validation.js");
 const bcrypt = require("bcrypt");
+const { userAuth } = require("./middlewares/auth.js");
 
 connectDB().then(() => {
     console.log('DB Connected Successfully!!')
@@ -20,7 +23,7 @@ connectDB().then(() => {
 
 
 //get user by id
-app.get('/getUser',async (req,res) => {
+app.get('/getUser',userAuth,async (req,res) => {
     try{
         const {email} = req.body;
         const user = await User.find({email});
@@ -40,7 +43,7 @@ app.get('/getUser',async (req,res) => {
 })
 
 // get all users
-app.get('/feed',async (req,res) => {
+app.get('/feed',userAuth,async (req,res) => {
     try{
         const user = await User.find({});
 
@@ -55,6 +58,29 @@ app.get('/feed',async (req,res) => {
             "error":error.message,
             "message":"error aagaya bhai!!"
         })      
+    }
+})
+
+// get my profile
+app.get('/myProfile',userAuth,async(req,res) => {
+    try{
+
+        const user = req.user;
+
+        if(!user){
+            throw new Error('User nahi mila bohot dhoondhliya!!')
+        }
+
+        return res.status(200).send({
+            "user":user,
+            "message":"yele bhai teri profile!!"
+        })
+    }
+    catch(error){
+        return res.status(402).send({
+            "error":error.message,
+            "message":"error aagaya bhai!!!"
+        })
     }
 })
 
@@ -95,15 +121,20 @@ app.post("/login",async (req,res) => {
             throw new Error('Invalid Credentials!!!')
         }  
 
-        const passwordMatch = await bcrypt.compare(password,user.password);
+        const passwordMatch = user.verifyPassword;
 
         if(!passwordMatch){
             throw new Error('Invalid Credentials!!!')
         }
-        
-        return res.status(200).send({
-            "message":"Login Successfull!!!"
+
+        const token = await user.getJWT();
+        // console.log(token);
+
+        // make a token
+        res.cookie("token",token,{expires:new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)}).send({
+            "message":"Login Succesfull!!!"
         })
+        // add the token to cookie and send it back to user
     }
     catch(error){
         return res.status(401).send({
@@ -115,7 +146,7 @@ app.post("/login",async (req,res) => {
 })
 
 // update data of exisiting users
-app.patch('/updateUser/:userId', async (req, res) => {
+app.patch('/updateUser/:userId',userAuth, async (req, res) => {
     try {
         const userId = req.params?.userId;
         const data = req.body;
@@ -156,4 +187,16 @@ app.patch('/updateUser/:userId', async (req, res) => {
     }
 });
 
-
+// send connection request
+app.post('/sendConnectionRequest',userAuth,async(req,res) => {
+    try{
+        const user = req.user;
+        res.send(user.firstName + ' ' + user.lastName + ' sent a connection request!!!')
+    }
+    catch(error){
+        return req.status(402).send({
+            "error":error.message,
+            "message":"Error aagaya bhai!!!"
+        })
+    }
+})
