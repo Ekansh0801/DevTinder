@@ -39,6 +39,7 @@ const validateEditProfileData = (req) => {
     return isUpdateAllowed;
 }
 
+// password update data
 const validatePasswordUpdateData = (req) => {
     const {currentPassword,newPassword,confirmNewPassword} = req.body;
     if(currentPassword.length === 0 || newPassword.length === 0 ||confirmNewPassword.length === 0){
