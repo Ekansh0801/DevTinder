@@ -1,9 +1,11 @@
 const express = require("express");
-const {userAuth} = require("../middlewares/auth.js")
+const {userAuth} = require("../middlewares/auth.js");
+const { validateEditProfileData, validatePasswordUpdateData } = require("../utils/validation.js");
 const profileRouter = express.Router();
+const bcrypt = require("bcrypt");
 
 // get my profile
-profileRouter.get('/myProfile',userAuth,async(req,res) => {
+profileRouter.get('/myProfile/view',userAuth,async(req,res) => {
     try{
 
         const user = req.user;
@@ -25,46 +27,60 @@ profileRouter.get('/myProfile',userAuth,async(req,res) => {
     }
 })
 
-// update data of exisiting users
-profileRouter.patch('/updateUser/:userId',userAuth, async (req, res) => {
-    try {
-        const userId = req.params?.userId;
-        const data = req.body;
-        // console.log(data);
-
-        const allowedUpdates = ["photoUrl", "about", "gender", "age", "skills"];
-        const isUpdateAllowed = Object.keys(data).every((k) => (
-            allowedUpdates.includes(k)
-        ));
-
-        if (!isUpdateAllowed) {
-            throw new Error("update not allowed!!");
+//update profile
+profileRouter.patch('/myProfile/edit',userAuth,async(req,res) => {
+    try{
+        const allowed = validateEditProfileData(req);
+        if(!allowed){
+            throw new Error("Edit not allowed!!!")
         }
 
-        if(data?.skills > 10){
-            throw new Error("skills can not be more than 10!!!")
-        }
+        const currUser = req.user;
+        Object.keys(req.body).forEach((key) => {
+            currUser[key] = req.body[key]
+        })
 
-        const user = await User.findByIdAndUpdate(userId, data, {
-            returnDocument: "after",
-            runValidators: true
-        });
+        await currUser.save()
 
-        if (!user) {
-            throw new Error("User not found");
-        }
-
-        return res.status(200).json({
-            message: "Data updated successfully",
-            user
-        });
-    } catch (error) {
-        console.error("Update error:", error);  // Log the full error details
-        return res.status(400).json({
-            "error": error.message || "An error occurred during the update",
-            "message": "Error updating user"
-        });
+        return res.status(200).send({
+            "message":"hogaya update!!!"
+        })
     }
-});
+    catch(error){
+        return res.status(402).send({
+            "error":error.message,
+            "message":"error aagaya bhai!!!"
+        })
+    }
+})
+
+//updatepassword
+profileRouter.patch('/myProfile/password/update',userAuth,async(req,res) => {
+    try{
+        validatePasswordUpdateData(req);
+
+        const currUser = req.user;
+        const currPassMatch = await bcrypt.compare(req.body.currentPassword,currUser.password);
+        if(!currPassMatch){
+            throw new Error('current Password does not match!!!')
+        }
+
+        const passwordHash = await bcrypt.hash(req.body.newPassword, 10);
+        currUser.password = passwordHash;
+        currUser.save()
+
+        return res.status(200).send({
+            "message":"password updated"
+        })
+
+    }
+    catch(error){
+        return res.status(402).send({
+            "error":error.message,
+            "message":"error aagaya bhai"
+        })
+    }
+})
+
 
 module.exports = profileRouter;
