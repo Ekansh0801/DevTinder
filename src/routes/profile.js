@@ -28,7 +28,7 @@ profileRouter.get('/myProfile/view',userAuth,async(req,res) => {
 })
 
 //update profile
-profileRouter.patch('/myProfile/edit',userAuth,async(req,res) => {
+profileRouter.post('/myProfile/edit',userAuth,async(req,res) => {
     try{
         const allowed = validateEditProfileData(req);
         if(!allowed){
@@ -43,11 +43,12 @@ profileRouter.patch('/myProfile/edit',userAuth,async(req,res) => {
         await currUser.save()
 
         return res.status(200).send({
+            "data":currUser,
             "message":"hogaya update!!!"
         })
     }
     catch(error){
-        return res.status(402).send({
+        return res.status(401).send({
             "error":error.message,
             "message":"error aagaya bhai!!!"
         })

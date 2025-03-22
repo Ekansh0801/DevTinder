@@ -5,7 +5,7 @@ const req = require("express/lib/request");
 const User = require("../models/user");
 const userRouter = express.Router();
 
-const USER_SAFE_DATA = ["firstName","lastName","gender","age","about","skills"];
+const USER_SAFE_DATA = ["firstName","lastName","gender","age","about","skills","photoUrl"];
 
 //get all the pending connection request of loggedin user
 userRouter.get('/user/requests/received',userAuth,async(req,res) => {
@@ -81,14 +81,18 @@ userRouter.get("/user/feed",userAuth,async(req,res) => {
                 {fromUserId:currUserId},
                 {toUserId:currUserId}
             ]
-        }).select(["fromUserId","toUserId"]);
+        }).select(["fromUserId","toUserId","status"]);
+
 
         const hiddenUserIdsFromFeed = new Set();
 
-        connectionRequests.forEach((req) => (
+        connectionRequests.forEach((req) => {
+            console.log(req)
+            if(req.status !== "interested"){
             hiddenUserIdsFromFeed.add(req.fromUserId.toString()),
             hiddenUserIdsFromFeed.add(req.toUserId.toString())
-        ))
+            }
+    })
         // console.log(hiddenUserIdsFromFeed)
 
         const users = await User.find({

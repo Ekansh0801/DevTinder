@@ -53,7 +53,8 @@ const userSchema = new mongoose.Schema({
             if(!validator.isURL(value)){
                 throw new Error('photo url not valid!!!')
             }
-        }
+        },
+        default:"https://i.pinimg.com/736x/c8/ec/05/c8ec0552d878e70bd29c25d0957a6faf.jpg"
 
     },
     about:{
