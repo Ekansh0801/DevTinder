@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const cookieParser = require("cookie-parser")
 const cors = require("cors");
+const http = require("http");
 
 app.use(cors({
     origin: "http://localhost:5173",
@@ -20,16 +21,21 @@ const authRouter = require('./routes/auth.js')
 const profileRouter = require('./routes/profile.js')
 const requestRouter = require('./routes/requests.js');
 const userRouter = require("./routes/user.js");
+const initializeSocket = require("./utils/socket.js");
 
 app.use('/',authRouter);
 app.use('/',profileRouter);
 app.use('/',requestRouter);
 app.use('/',userRouter);
 
+const server = http.createServer(app)
+
+initializeSocket(server);
+
 
 connectDB().then(() => {
     console.log('DB Connected Successfully!!')
-    app.listen(3000, () => {
+    server.listen(3000, () => {
         console.log("Server listening at port 3000!!")
     })
     

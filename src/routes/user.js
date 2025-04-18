@@ -87,11 +87,8 @@ userRouter.get("/user/feed",userAuth,async(req,res) => {
         const hiddenUserIdsFromFeed = new Set();
 
         connectionRequests.forEach((req) => {
-            console.log(req)
-            if(req.status !== "interested"){
             hiddenUserIdsFromFeed.add(req.fromUserId.toString()),
             hiddenUserIdsFromFeed.add(req.toUserId.toString())
-            }
     })
         // console.log(hiddenUserIdsFromFeed)
 
